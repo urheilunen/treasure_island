@@ -6,7 +6,7 @@ import time
 
 
 if __name__ == '__main__':
-    TEST_MODE = True
+    TEST_MODE = False
     session = requests.Session()
     if TEST_MODE:
         username = 'TestUserName'
@@ -62,12 +62,15 @@ if __name__ == '__main__':
         response = session.get(server_url + '/game_state', params={'game_id': game_chosen}).json()
         if response['result']['is_started']:
             game_started = True
-    print('Игра началась')
+    pyautogui.alert('Игра началась')
     game_cycle = True
     while game_cycle:
         time.sleep(1)
-        response = session.get(server_url + '/game_state', params={'game_id': game_chosen}).json()
-        if response['result']['whose_move'] == client_id:
+        game_state = session.get(server_url + '/game_state', params={'game_id': game_chosen}).json()['result']
+        if game_state['whose_move'] == client_id:
             print('Ваш ход')
+            actions = {'Взять карту': 'do_raid', 'Закончить рейд': 'end_raid'}
+            action = pyautogui.confirm(text='Выберите действие', buttons=[_ for _ in actions])
+            response = session.get(server_url + '/game_state', params={'game_id': game_chosen}).json()
         else:
             pass

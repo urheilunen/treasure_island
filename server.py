@@ -53,18 +53,7 @@ class Game:
     def get_started(self):
         self.is_started = True
         for player_id in self.players_list:
-            self.card_decks[player_id] = {
-                'helms': [],
-                'knives': [],
-                'pistols': [],
-                'compasses': [],
-                'candles': [],
-                'parrots': [],
-                'chests': [],
-                'keys': [],
-                'rums': [],
-                'anchors': [],
-            }
+            self.card_decks[player_id] = []
         self.whose_move = self.players_list[0]
 
     def get_state(self):
@@ -104,33 +93,16 @@ class Game:
             else:
                 return True
         if action == 'end_raid':
+            # пройтись по каждой карте в рейде
             for i in range(len(self.card_decks['raid'])):
                 # взять карту из рейда и получить ее имя
                 raided_card = self.card_decks['raid'].pop()
                 raided_card_name = raided_card.split()[0]
-                # найти нужную стопку у игрока и поместить туда каждую из карт
-                if raided_card_name == 'Штурвал':
-                    self.card_decks['player_id']['helms'].append(raided_card)
-                if raided_card_name == 'Нож':
-                    self.card_decks['player_id']['knives'].append(raided_card)
-                if raided_card_name == 'Пистолет':
-                    self.card_decks['player_id']['pistols'].append(raided_card)
-                if raided_card_name == 'Компас':
-                    self.card_decks['player_id']['compasses'].append(raided_card)
-                if raided_card_name == 'Свеча':
-                    self.card_decks['player_id']['candles'].append(raided_card)
-                if raided_card_name == 'Попугай':
-                    self.card_decks['player_id']['parrots'].append(raided_card)
-                if raided_card_name == 'Сундук':
-                    self.card_decks['player_id']['chests'].append(raided_card)
-                if raided_card_name == 'Ключ':
-                    self.card_decks['player_id']['keys'].append(raided_card)
-                if raided_card_name == 'Якорь':
-                    self.card_decks['player_id']['anchors'].append(raided_card)
+                # переместить карту в список к игроку
+                self.card_decks['player_id'].append(raided_card)
             # смена хода
             self.transit_move_to_next_player()
             return True
-
 
 
 app = FastAPI()
@@ -212,15 +184,23 @@ def enlist_for_a_game(game_id: str, player_id: str):
 @app.get('/game_state')
 def get_game_state(game_id: str):
     inspected_game = GAMES.get(game_id, False)
-    return {
-        'status': 'ok',
-        'result': inspected_game.get_state()
-    }
+    if not inspected_game == False:
+        return {
+            'status': 'ok',
+            'result': inspected_game.get_state()
+        }
+    else:
+        return {
+            'status': 'fail',
+            'error': 'No game with this ID'
+        }
 
 
 @app.post('/make_move')
 def make_move(game_id, player_id, action):
-    pass
+    game_in_action: Game = GAMES.get('game_id')
+    game_in_action.make_move(player_id, action)
+    return game_in_action.get_state()
 
 
 if __name__ == '__main__':
